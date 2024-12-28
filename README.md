@@ -34,7 +34,6 @@
 - После выполнения скрипта, все результаты будут сохранены в файл `output.csv` в формате CSV.
 
 ## Замечания
-- Скрипт отображает не более 40 транзакций. 
 - Убедитесь, что ваши публичные адреса корректны, чтобы избежать ошибок в процессе выполнения.
 - В случае возникновения ошибок проверьте правильность заполнения `addresses.txt` и установленных зависимостей.
 
@@ -75,7 +74,6 @@ The results are saved to the `output.csv` file in the same directory.
 - After the script finishes execution, all results will be saved in the `output.csv` file in CSV format.
 
 ## Notes
-- The script displays no more than 40 transactions.
 - Ensure that your public addresses are correct to avoid errors during execution.
 - If errors occur, check the `addresses.txt` file and the installed dependencies for correctness.
 
