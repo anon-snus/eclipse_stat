@@ -62,21 +62,34 @@ class Request:
 		url = 'https://api.eclipsescan.xyz/v1/account/transaction'
 		for i in range(5):
 			try:
-				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address, 'page_size': '40'})
-				if bal['success'] == True:
-					programms = []
-					tx_count = len(bal['data']['transactions'])
-					for i in bal['data']['transactions']:
-						for w in i['programIds']:
-							if w not in system_programs:
-								programms.append(w)
-					programms = len(list(set(programms)))
-					return {'programms':programms, 'tx_count':tx_count}
+				bal = await async_get(url=url, proxy=self.proxy, params={'address': self.address, 'page_size': '40'})
+				if bal['success']:
+					programms = set()
+					tx_count = 0
+					while len(bal['data']['transactions']) == 40:
+						tx_count += len(bal['data']['transactions'])
+						for txn in bal['data']['transactions']:
+							for program_id in txn['programIds']:
+								if program_id not in system_programs:
+									programms.add(program_id)
+						params = {
+							'address': self.address, 'page_size': '40',
+							'before': bal['data']['transactions'][-1]['txHash'],
+						}
+						bal = await async_get(url=url, proxy=self.proxy, params=params)
+						await asyncio.sleep(1)
+					tx_count += len(bal['data']['transactions'])
+					for txn in bal['data']['transactions']:
+						for program_id in txn['programIds']:
+							if program_id not in system_programs:
+								programms.add(program_id)
+					return {'programms': len(programms), 'tx_count': tx_count}
 			except Exception as e:
 				# print(f'ошибка {e}')
 				await asyncio.sleep(5)
 		print(f'error tx_count: {self.address}')
-		return 0.0
+		return {'programms': 0, 'tx_count': 0}
+
 
 	async def wallet_info(self):
 		bal = await self.eth_balance()
