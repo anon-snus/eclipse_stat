@@ -1,4 +1,4 @@
-from requests import Request
+from data.requests import Request
 import asyncio
 import csv
 
@@ -20,10 +20,10 @@ async def main():
 	tokens = list(set().union(*tokens))
 	with open('output.csv', 'w', newline='') as csvfile:
 		csvwriter = csv.writer(csvfile)
-		headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count'] + tokens
+		headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months'] + tokens
 		csvwriter.writerow(headers)
 		for entry in data:
-			row = [entry['address'], entry['bal'], entry['domain'], entry['tx_count'], entry['dapps_count']]
+			row = [entry['address'], entry['bal'], entry['domain'], entry['tx_count'], entry['dapps_count'], entry['unique_days'], entry['unique_months']]
 			for token in tokens:
 				row.append(entry['tokens'].get(token, 0))
 			csvwriter.writerow(row)
