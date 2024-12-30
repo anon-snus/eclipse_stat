@@ -7,6 +7,7 @@
 - Количество транзакций
 - Количество уникальных приложений
 - Количество токенов
+- Количество уникальных месяцев и дней
 
 Результаты сохраняются в файл `output.csv` в той же директории.
 
@@ -47,6 +48,7 @@ This project checks statistics for specified public addresses. For each address,
 - Number of transactions
 - Number of unique applications
 - Number of tokens
+- Number of unique months and days
 
 The results are saved to the `output.csv` file in the same directory.
 
