@@ -1,5 +1,7 @@
 # Чекер статистики Eclipse 
 
+## Subscribe to https://t.me/degen_statistics 🤫
+
 ## Описание
 Этот проект проверяет статистику для заданных публичных адресов. Для каждого адреса анализируются следующие параметры:
 - Наличие домена Turbo
@@ -40,6 +42,8 @@
 
 
 # Statistics Checker Eclipse
+
+## Subscribe to https://t.me/degen_statistics 🤫
 
 ## Description
 This project checks statistics for specified public addresses. For each address, the following parameters are analyzed:
