@@ -7,6 +7,7 @@ async def main():
 	with open('addresses.txt') as f:
 		addresses = f.read().splitlines()
 	data = []
+	print(f'Subscribe to https://t.me/degen_statistics 🤫')
 	for i in addresses:
 		req = Request(address=i)
 		inf = await req.wallet_info()
