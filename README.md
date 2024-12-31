@@ -26,6 +26,12 @@
    7jtuen1N95bBNyAV5dbcx6enYT24qKqHobyHQZnyRoTD
    8t2XBEjM7db1Fv24FhNaayPx32daDZ95L5xTETKCk2pK
    ```
+   
+2. По желанию создайте или заполните файл `proxies.txt`, указав в нем прокси формата логин:пароль@айпи:порт, каждый с новой строки. Пример:
+   ```
+   log:pass@ip:port
+   log:pass@ip:port
+   ```
 
 ## Запуск
 1. Запустите скрипт с помощью команды:
@@ -69,6 +75,12 @@ The results are saved to the `output.csv` file in the same directory.
    7jtuen1N95bBNyAV5dbcx6enYT24qKqHobyHQZnyRoTD
    8t2XBEjM7db1Fv24FhNaayPx32daDZ95L5xTETKCk2pK
    ```
+2. Optionally, create or fill in the file `proxies.txt`, specifying in it proxies of the format login:password@ip:port, each on a new line. Example:
+   ```
+   log:pass@ip:port
+   log:pass@ip:port
+   ```
+
 
 ## Usage
 1. Run the script using the command:
