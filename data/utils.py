@@ -12,7 +12,7 @@ async def async_get(
         **kwargs
 ) -> dict | str | None:
 
-    if 'http://' not in proxy:
+    if proxy and 'http://' not in proxy:
         proxy = f'http://{proxy}'
 
     connector = ProxyConnector.from_url(
