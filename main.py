@@ -1,32 +1,67 @@
-from data.requests import Request
 import asyncio
 import csv
+from data.requests import Request
+from data.utils import check_ip, open_proxies
+
+
+async def fetch_data(addresses, proxies):
+    """Асинхронно получает информацию о кошельках."""
+    data = []
+    for i, address in enumerate(addresses):
+        try:
+            # Проверяем прокси
+            proxy = proxies[i] if proxies and await check_ip(proxy=proxies[i]) else None
+
+            # Если прокси не работает и она обязательна, пропускаем адрес
+            if proxies and proxy is None:
+                print(f"Skipping address {address}: Invalid proxy.")
+                data.append({'address': address, 'bal':'invalid Proxy','domain':'invalid Proxy', 'tokens':{}, 'tx_count':'invalid Proxy', 'dapps_count':'invalid Proxy', 'unique_months':'invalid Proxy', 'unique_days':'invalid Proxy'})
+                continue
+
+            # Создаём запрос
+            req = Request(address=address, proxy=proxy)
+            inf = await req.wallet_info()
+            print(inf)
+            data.append(inf)
+
+        except Exception as e:
+            # Логируем ошибки и пропускаем адрес
+            print(f"Error processing address {address}: {e}")
+            continue
+
+        # Пауза между запросами
+        await asyncio.sleep(5)
+
+    return data
+
+
+def write_to_csv(data, output_file='output.csv'):
+    """Записывает данные в CSV файл."""
+    tokens = list(set().union(*(entry['tokens'].keys() for entry in data)))
+    headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months'] + tokens
+
+    with open(output_file, 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(headers)
+        for entry in data:
+            row = [
+                entry['address'], entry['bal'], entry['domain'], 
+                entry['tx_count'], entry['dapps_count'], 
+                entry['unique_days'], entry['unique_months']
+            ]
+            row.extend(entry['tokens'].get(token, 0) for token in tokens)
+            csvwriter.writerow(row)
+        print('Info is saved to output.csv')
 
 
 async def main():
-	with open('addresses.txt') as f:
-		addresses = f.read().splitlines()
-	data = []
-	print(f'Subscribe to https://t.me/degen_statistics 🤫')
-	for i in addresses:
-		req = Request(address=i)
-		inf = await req.wallet_info()
-		print(inf)
-		data.append(inf)
-		await asyncio.sleep(5)
-	tokens = []
-	for i in data:
-		tokens.append(i['tokens'].keys())
-	tokens = list(set().union(*tokens))
-	with open('output.csv', 'w', newline='') as csvfile:
-		csvwriter = csv.writer(csvfile)
-		headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months'] + tokens
-		csvwriter.writerow(headers)
-		for entry in data:
-			row = [entry['address'], entry['bal'], entry['domain'], entry['tx_count'], entry['dapps_count'], entry['unique_days'], entry['unique_months']]
-			for token in tokens:
-				row.append(entry['tokens'].get(token, 0))
-			csvwriter.writerow(row)
+    with open('addresses.txt') as f:
+        addresses = f.read().splitlines()
+
+    proxies = open_proxies(path='proxies.txt', addresses_count=len(addresses))
+    data = await fetch_data(addresses, proxies)
+    write_to_csv(data)
+
 
 if __name__ == "__main__":
-	asyncio.run(main())
+    asyncio.run(main())
