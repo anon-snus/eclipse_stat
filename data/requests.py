@@ -2,6 +2,9 @@ from data.utils import async_get
 import asyncio
 from data.system_addresses import system_programs
 from datetime import datetime
+from decimal import Decimal
+
+
 class Request:
 	def __init__(self,
 		proxy : str | None = None,
@@ -68,6 +71,8 @@ class Request:
 					tx_count = 0
 					unique_days=set()
 					unique_months = set()
+					volume = 0
+					fee = 0
 					while len(bal['data']['transactions']) == 40:
 						tx_count += len(bal['data']['transactions'])
 						for txn in bal['data']['transactions']:
@@ -76,6 +81,8 @@ class Request:
 							unique_months.add((dt_object.year, dt_object.month))
 							# Добавляем полный день для уникальности дня
 							unique_days.add((dt_object.year, dt_object.month, dt_object.day))
+							volume += int(txn['sol_value'])
+							fee += int(txn['fee'])
 							for program_id in txn['programIds']:
 								if program_id not in system_programs:
 									programms.add(program_id)
@@ -92,10 +99,13 @@ class Request:
 						unique_months.add((dt_object.year, dt_object.month))
 						# Добавляем полный день для уникальности дня
 						unique_days.add((dt_object.year, dt_object.month, dt_object.day))
+						volume += int(txn['sol_value'])
+						fee += int(txn['fee'])
 						for program_id in txn['programIds']:
 							if program_id not in system_programs:
 								programms.add(program_id)
-					return {'programms': len(programms), 'tx_count': tx_count, 'unique_days': len(unique_days), 'unique_months': len(unique_months)}
+					return {'programms': len(programms), 'tx_count': tx_count, 'unique_days': len(unique_days),
+					        'unique_months': len(unique_months), 'volume_eth': round(Decimal(volume)/10**9, 3), 'fee_eth': Decimal(fee)/10**9}
 			except Exception as e:
 				# print(f'ошибка {e}')
 				await asyncio.sleep(5)
@@ -108,4 +118,4 @@ class Request:
 		domain = await self.domain()
 		tokens = await self.tokens()
 		tx_count = await self.tx_count()
-		return {'address':self.address,'bal':bal, 'domain':domain, 'tokens':tokens, 'tx_count':tx_count['tx_count'], 'dapps_count':tx_count['programms'], 'unique_months':tx_count['unique_months'], 'unique_days':tx_count['unique_days']}
+		return {'address':self.address,'bal':bal, 'domain':domain, 'tx_count':tx_count['tx_count'], 'dapps_count':tx_count['programms'], 'unique_months':tx_count['unique_months'], 'unique_days':tx_count['unique_days'], 'volume_eth':tx_count['volume_eth'], 'fee_eth':tx_count['fee_eth'], 'tokens':tokens}
