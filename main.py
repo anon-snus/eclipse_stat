@@ -15,11 +15,15 @@ async def fetch_data(addresses, proxies):
             # Если прокси не работает и она обязательна, пропускаем адрес
             if proxies and proxy is None:
                 print(f"Skipping address {address}: Invalid proxy.")
-                data.append({'address': address, 'bal':'invalid Proxy','domain':'invalid Proxy', 'tokens':{}, 'tx_count':'invalid Proxy', 'dapps_count':'invalid Proxy', 'unique_months':'invalid Proxy', 'unique_days':'invalid Proxy'})
+                data.append({'address': address, 'bal':f'invalid Proxy {proxies[i]}','domain':f'invalid Proxy {proxies[i]}',
+                             'tokens':{}, 'tx_count':f'invalid Proxy {proxies[i]}', 'dapps_count':f'invalid Proxy {proxies[i]}',
+                             'unique_months':f'invalid Proxy {proxies[i]}', 'unique_days':f'invalid Proxy {proxies[i]}',
+                            'volume_eth':f'invalid Proxy {proxies[i]}', 'fee_eth':f'invalid Proxy {proxies[i]}',})
                 continue
 
             # Создаём запрос
-            req = Request(address=address, proxy=proxy)
+            # req = Request(address=address, proxy=proxy)
+            req = Request(address=address)
             inf = await req.wallet_info()
             print(inf)
             data.append(inf)
@@ -38,7 +42,7 @@ async def fetch_data(addresses, proxies):
 def write_to_csv(data, output_file='output.csv'):
     """Записывает данные в CSV файл."""
     tokens = list(set().union(*(entry['tokens'].keys() for entry in data)))
-    headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months'] + tokens
+    headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months', 'volume_eth', 'fee_eth'] + tokens
 
     with open(output_file, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
@@ -47,7 +51,8 @@ def write_to_csv(data, output_file='output.csv'):
             row = [
                 entry['address'], entry['bal'], entry['domain'], 
                 entry['tx_count'], entry['dapps_count'], 
-                entry['unique_days'], entry['unique_months']
+                entry['unique_days'], entry['unique_months'],
+                entry['volume_eth'], entry['fee_eth']
             ]
             row.extend(entry['tokens'].get(token, 0) for token in tokens)
             csvwriter.writerow(row)
