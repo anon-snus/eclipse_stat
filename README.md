@@ -60,6 +60,7 @@ This project checks statistics for specified public addresses. For each address,
 - Number of unique applications
 - Number of tokens
 - Number of unique months and days
+- Ethereum volume and eth fees
 
 The results are saved to the `output.csv` file in the same directory.
 
