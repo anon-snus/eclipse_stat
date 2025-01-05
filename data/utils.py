@@ -3,6 +3,7 @@ from data import exceptions
 import aiohttp
 import sys
 import asyncio
+import re
 
 async def async_get(
         url: str,
@@ -32,6 +33,17 @@ async def async_get(
             raise exceptions.HTTPException(response=response, status_code=status_code)
 
 async def check_ip(proxy: str):
+    try:
+        user_pass, host_port = proxy.rsplit('@', 1)
+    except ValueError:
+        print(f'Proxy: {proxy} имеет неверный формат')
+        return False
+
+
+    if not re.match(r'^[\d.:]+$', host_port):
+        print(f'Проверка работоспособности прокси невозможна из-за формата, прокси используется')
+        return True
+
     for i in range(3):
         try:
             r = await async_get(url='http://eth0.me/', proxy=proxy, response_type='text')
@@ -42,6 +54,7 @@ async def check_ip(proxy: str):
                 return True
         except Exception as e:
             await asyncio.sleep(1)
+
     print(f'Proxy: {proxy} does not work')
     return False
 
