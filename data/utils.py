@@ -71,11 +71,11 @@ def open_proxies(path: str, addresses_count: int):
         return None
 
     if not proxies:
-        print('No proxies provided. Will use your IP.')
+        print(f'‼️ No proxies provided. Will use your IP ‼️')
         return None
 
     if len(proxies) != addresses_count:
-        print(f"Error: Expected {addresses_count} proxies, but found {len(proxies)} in '{path}'.")
+        print(f"❌ Error: Expected {addresses_count} proxies, but found {len(proxies)} in '{path}' ❌")
         sys.exit(1)
-    print('Number of proxies matches the required addresses. Will use proxies.')
+    print('✅ Number of proxies matches the required addresses. Will use proxies ✅')
     return proxies
