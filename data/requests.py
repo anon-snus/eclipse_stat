@@ -38,7 +38,7 @@ class Request:
 						return bal['data']['favorite']
 					return 0.0
 			except Exception as e:
-				# print(f'ошибка {e}')
+				print(f'ошибка  domain {e}')
 				await asyncio.sleep(5)
 		print(f'error domain: {self.address}')
 		return 0.0
@@ -119,17 +119,93 @@ class Request:
 							# if program_id not in system_programs:
 							# 	programms.add(program_id)
 					return {'tx_count': len(transactions), 'unique_days': len(unique_days),
-					        'unique_months': len(unique_months)}
+					        'unique_months': len(unique_months), 'transactions': transactions}
 			except Exception as e:
 				print(f'ошибка {e}')
 				await asyncio.sleep(5)
 		print(f'error tx_count: {self.address}')
 		return {'tx_count': 0, 'unique_days': 0, 'unique_months': 0}
 
+	async def get_tx_info(self, tx_id:str):
+		url = 'https://api.eclipsescan.xyz/v1/transaction/detail'
+		programs = set()
+		turbo_tap_id = 'turboe9kMc3mSR8BosPkVzoHUfn5RVNzZhkrT2hdGxN'
+		turbo_address = None
+		for i in range(5):
+			try:
+				transaction_info = await async_get(url=url, proxy=self.proxy, params={'tx':tx_id})
+				if transaction_info['success'] == True:
+					transaction_info = transaction_info['data']
+					fee = transaction_info['fee']
+					for pr in transaction_info['programs_involved']:
 
-	async def wallet_info(self):
+						if pr not in system_programs:
+							programs.add(pr)
+							if pr == turbo_tap_id and len(transaction_info['programs_involved']) == 2:
+								turbo_address = transaction_info['sol_bal_change'][1]['address']
+
+					for n in transaction_info['sol_bal_change']:
+						if n['address']==self.address:
+							sol_bal_change = abs(n['change_amount'])
+					# print({'fee':fee, 'programs':programs, 'sol_bal_change':sol_bal_change, 'turbo_address':turbo_address})
+
+
+					return {'fee':fee, 'programs':programs, 'sol_bal_change':sol_bal_change, 'turbo_address':turbo_address}
+			except Exception as e:
+				print(e)
+				await asyncio.sleep(0.1)
+
+		print(f'error get_tx_info: {tx_id}')
+		return {{'fee':0, 'programs':[]}}
+
+	async def count_turbo_taps(self, address:str):
+		url = 'https://api.eclipsescan.xyz/v1/account/balance_change/total'
+		for i in range(5):
+			try:
+				count = await async_get(url=url, proxy=self.proxy, params={'address': address})
+				if count['success'] == True:
+					count = count['data']
+					return count
+			except Exception as e:
+				print(e)
+				await asyncio.sleep(0.1)
+		print(f'error count_turbo_taps: {self.address}')
+		return 0
+
+
+	async def all_tx_info(self, transactions:set|list|None=None):
+		fee = 0
+		count = 0
+		programs = set()
+		sol_bal_change = 0
+		turbo_address = None
+		if transactions is None:
+			await self.tx_count()['transactions']
+		for tx in transactions:
+			info = await self.get_tx_info(tx)
+			fee += info['fee']
+			sol_bal_change += info['sol_bal_change']
+			programs = programs.union(info['programs'])
+
+			if info['turbo_address']:
+				turbo_address = info['turbo_address']
+			if turbo_address:
+				count = await self.count_turbo_taps(address=turbo_address)
+		# print(f'total fee: {Decimal(fee)/10**9}, turbo {turbo_tap}, count {len(programs)}')
+		return {'volume_eth':Decimal(sol_bal_change)/10**9,'fee': Decimal(fee)/10**9, 'programs': len(programs), 'turbo_taps': count}
+
+
+	async def wallet_info(self, full_inf:bool=False):
 		bal = await self.eth_balance()
 		domain = await self.domain()
 		tokens = await self.tokens()
 		tx_count = await self.tx_count()
+		if full_inf:
+
+			tx_info = await self.all_tx_info(transactions=tx_count['transactions'])
+			return {
+				'address': self.address, 'domain': domain, 'bal': bal, 'tx_count': tx_count['tx_count'], 'volume_eth': tx_info['volume_eth'],
+				'unique_dapps': tx_info['programs'], 'turbo_taps': tx_info['turbo_taps'],
+				'unique_months': tx_count['unique_months'], 'unique_days': tx_count['unique_days'], 'total_fee': tx_info['fee'], 'tokens': tokens
+			}
 		return {'address':self.address,'bal':bal, 'domain':domain, 'tx_count':tx_count['tx_count'],'unique_months':tx_count['unique_months'], 'unique_days':tx_count['unique_days'], 'tokens':tokens}
