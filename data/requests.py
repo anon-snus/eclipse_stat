@@ -62,55 +62,69 @@ class Request:
 		return {}
 
 	async def tx_count(self):
-		url = 'https://api.eclipsescan.xyz/v1/account/transaction'
+		url = 'https://api.eclipsescan.xyz/v1/account/transfer'
 		for i in range(5):
 			try:
-				bal = await async_get(url=url, proxy=self.proxy, params={'address': self.address, 'page_size': '40'})
+				page = 1
+				bal = await async_get(url=url, proxy=self.proxy,
+				                      params={
+					                      'address': self.address,
+					                      'page': page,
+					                      'page_size': '100',
+					                      'remove_spam': 'false',
+					                      'exclude_amount_zero': 'false',
+				                      }
+				                      )
+				# print(bal)
 				if bal['success']:
-					programms = set()
-					tx_count = 0
-					unique_days=set()
+					transactions = set()
+					unique_days = set()
 					unique_months = set()
-					volume = 0
-					fee = 0
-					while len(bal['data']['transactions']) == 40:
-						tx_count += len(bal['data']['transactions'])
-						for txn in bal['data']['transactions']:
-							dt_object = datetime.fromtimestamp(txn['blockTime'])
+
+					# programms = set()
+					# volume = 0
+					# fee = 0
+					while len(bal['data']) == 100:
+						for txn in bal['data']:
+							transactions.add(txn['trans_id'])
+							dt_object = datetime.fromtimestamp(txn['block_time'])
+							# print(dt_object)
 							# Добавляем месяц и год для уникальности месяца
 							unique_months.add((dt_object.year, dt_object.month))
 							# Добавляем полный день для уникальности дня
 							unique_days.add((dt_object.year, dt_object.month, dt_object.day))
-							volume += int(txn['sol_value'])
-							fee += int(txn['fee'])
-							for program_id in txn['programIds']:
-								if program_id not in system_programs:
-									programms.add(program_id)
-						params = {
-							'address': self.address, 'page_size': '40',
-							'before': bal['data']['transactions'][-1]['txHash'],
-						}
-						bal = await async_get(url=url, proxy=self.proxy, params=params)
+							# volume += int(txn['sol_value'])
+							# fee += int(txn['fee'])
+							# for program_id in txn['programIds']:
+							# 	if program_id not in system_programs:
+							# 		programms.add(program_id)
+						page += 1
+						bal = await async_get(url=url, proxy=self.proxy, params={
+							'address': self.address, 'page': page, 'page_size': '100', 'remove_spam': 'false',
+							'exclude_amount_zero': 'false',
+						})
 						await asyncio.sleep(1)
-					tx_count += len(bal['data']['transactions'])
-					for txn in bal['data']['transactions']:
-						dt_object = datetime.fromtimestamp(txn['blockTime'])
+					for txn in bal['data']:
+						transactions.add(txn['trans_id'])
+						# print(transactions)
+						dt_object = datetime.fromtimestamp(txn['block_time'])
+						# print(dt_object)
 						# Добавляем месяц и год для уникальности месяца
 						unique_months.add((dt_object.year, dt_object.month))
 						# Добавляем полный день для уникальности дня
 						unique_days.add((dt_object.year, dt_object.month, dt_object.day))
-						volume += int(txn['sol_value'])
-						fee += int(txn['fee'])
-						for program_id in txn['programIds']:
-							if program_id not in system_programs:
-								programms.add(program_id)
-					return {'programms': len(programms), 'tx_count': tx_count, 'unique_days': len(unique_days),
-					        'unique_months': len(unique_months), 'volume_eth': round(Decimal(volume)/10**9, 3), 'fee_eth': Decimal(fee)/10**9}
+						# volume += int(txn['sol_value'])
+						# fee += int(txn['fee'])
+						# for program_id in txn['programIds']:
+							# if program_id not in system_programs:
+							# 	programms.add(program_id)
+					return {'tx_count': len(transactions), 'unique_days': len(unique_days),
+					        'unique_months': len(unique_months)}
 			except Exception as e:
-				# print(f'ошибка {e}')
+				print(f'ошибка {e}')
 				await asyncio.sleep(5)
 		print(f'error tx_count: {self.address}')
-		return {'programms': 0, 'tx_count': 0, 'unique_days': 0, 'unique_months': 0}
+		return {'tx_count': 0, 'unique_days': 0, 'unique_months': 0}
 
 
 	async def wallet_info(self):
@@ -118,4 +132,4 @@ class Request:
 		domain = await self.domain()
 		tokens = await self.tokens()
 		tx_count = await self.tx_count()
-		return {'address':self.address,'bal':bal, 'domain':domain, 'tx_count':tx_count['tx_count'], 'dapps_count':tx_count['programms'], 'unique_months':tx_count['unique_months'], 'unique_days':tx_count['unique_days'], 'volume_eth':tx_count['volume_eth'], 'fee_eth':tx_count['fee_eth'], 'tokens':tokens}
+		return {'address':self.address,'bal':bal, 'domain':domain, 'tx_count':tx_count['tx_count'],'unique_months':tx_count['unique_months'], 'unique_days':tx_count['unique_days'], 'tokens':tokens}
