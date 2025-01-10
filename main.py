@@ -31,6 +31,7 @@ async def fetch_data(addresses, proxies, full_info: bool = False):
         except Exception as e:
             print(f"Error processing address {address}: {e}")
             continue
+        print()
         if full_info:
             await asyncio.sleep(5)
         else:
