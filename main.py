@@ -2,7 +2,7 @@ import asyncio
 import csv
 from data.requests import Request
 from data.utils import check_ip, open_proxies
-
+import sys
 
 async def fetch_data(addresses, proxies):
     """Асинхронно получает информацию о кошельках."""
@@ -16,9 +16,9 @@ async def fetch_data(addresses, proxies):
             if proxies and proxy is None:
                 print(f"Skipping address {address}: Invalid proxy.")
                 data.append({'address': address, 'bal':f'invalid Proxy {proxies[i]}','domain':f'invalid Proxy {proxies[i]}',
-                             'tokens':{}, 'tx_count':f'invalid Proxy {proxies[i]}', 'dapps_count':f'invalid Proxy {proxies[i]}',
+                             'tokens':{}, 'tx_count':f'invalid Proxy {proxies[i]}', 
                              'unique_months':f'invalid Proxy {proxies[i]}', 'unique_days':f'invalid Proxy {proxies[i]}',
-                            'volume_eth':f'invalid Proxy {proxies[i]}', 'fee_eth':f'invalid Proxy {proxies[i]}',})
+                            })
                 continue
 
             # Создаём запрос
@@ -42,7 +42,7 @@ async def fetch_data(addresses, proxies):
 def write_to_csv(data, output_file='output.csv'):
     """Записывает данные в CSV файл."""
     tokens = list(set().union(*(entry['tokens'].keys() for entry in data)))
-    headers = ['address', 'balance_eth', 'domain', 'tx_count', 'dapps_count', 'unique_days', 'unique_months', 'volume_eth', 'fee_eth'] + tokens
+    headers = ['address', 'balance_eth', 'domain', 'tx_count', 'unique_days', 'unique_months'] + tokens
 
     with open(output_file, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
@@ -50,9 +50,8 @@ def write_to_csv(data, output_file='output.csv'):
         for entry in data:
             row = [
                 entry['address'], entry['bal'], entry['domain'], 
-                entry['tx_count'], entry['dapps_count'], 
+                entry['tx_count'],
                 entry['unique_days'], entry['unique_months'],
-                entry['volume_eth'], entry['fee_eth']
             ]
             row.extend(entry['tokens'].get(token, 0) for token in tokens)
             csvwriter.writerow(row)
@@ -70,3 +69,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
