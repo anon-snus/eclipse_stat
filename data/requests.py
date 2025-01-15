@@ -191,6 +191,7 @@ class Request:
 				turbo_address = info['turbo_address']
 			if turbo_address:
 				count = await self.count_turbo_taps(address=turbo_address)
+			await asyncio.sleep(0.01)
 		# print(f'total fee: {Decimal(fee)/10**9}, turbo {turbo_tap}, count {len(programs)}')
 		return {'volume_eth':Decimal(sol_bal_change)/10**9,'fee': Decimal(fee)/10**9, 'programs': len(programs), 'turbo_taps': count}
 
