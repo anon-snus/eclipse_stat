@@ -3,7 +3,7 @@ import asyncio
 from data.system_addresses import system_programs
 from datetime import datetime
 from decimal import Decimal
-
+from fake_useragent import UserAgent
 
 class Request:
 	def __init__(self,
@@ -12,27 +12,35 @@ class Request:
 	):
 		self.proxy = proxy if proxy else None
 		self.address = address
+		self.headers ={
+		    'sec-ch-ua-platform': '"macOS"',
+		    'Referer': 'https://eclipsescan.xyz/',
+		    'User-Agent': UserAgent().random,
+		    'Accept': 'application/json, text/plain, */*',
+		    'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+		    'sec-ch-ua-mobile': '?0',
+		}
 
 	async def eth_balance(self):
 		url = 'https://api.eclipsescan.xyz/v1/account'
-		for i in range(5):
+		for i in range(10):
 			try:
-				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address})
+				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address}, headers=self.headers)
 				if bal['success'] == True:
 					if len(bal['data']) <3:
 						return 0.0
 					return int(bal['data']['lamports'])/10**9
 			except Exception as e:
-				# print(f'ошибка {e}')
+				print(f'ошибка {e}')
 				await asyncio.sleep(5)
 		print(f'error eth_balance: {self.address}')
 		return 0.0
 
 	async def domain(self):
 		url = 'https://api.eclipsescan.xyz/v1/account/domain'
-		for i in range(5):
+		for i in range(10):
 			try:
-				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address})
+				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address}, headers=self.headers)
 				if bal['success'] == True:
 					if bal['data']:
 						return bal['data']['favorite']
@@ -46,9 +54,9 @@ class Request:
 	async def tokens(self):
 		url = 'https://api.eclipsescan.xyz/v1/account/tokens'
 		tokens = {}
-		for i in range(5):
+		for i in range(10):
 			try:
-				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address})
+				bal = await async_get(url=url, proxy=self.proxy, params = {'address':self.address}, headers=self.headers)
 				if bal['success'] == True:
 					if bal['data']:
 						for i in bal['data']['tokens']:
@@ -56,14 +64,14 @@ class Request:
 						return tokens
 					return {}
 			except Exception as e:
-				# print(f'ошибка {e}')
+				print(f'ошибка {e}')
 				await asyncio.sleep(5)
 		print(f'error tokens: {self.address}')
 		return {}
 
 	async def tx_count(self):
 		url = 'https://api.eclipsescan.xyz/v1/account/transfer'
-		for i in range(5):
+		for i in range(10):
 			try:
 				page = 1
 				bal = await async_get(url=url, proxy=self.proxy,
@@ -73,7 +81,8 @@ class Request:
 					                      'page_size': '100',
 					                      'remove_spam': 'false',
 					                      'exclude_amount_zero': 'false',
-				                      }
+				                      },
+				                      headers=self.headers
 				                      )
 				# print(bal)
 				if bal['success']:
@@ -102,7 +111,7 @@ class Request:
 						bal = await async_get(url=url, proxy=self.proxy, params={
 							'address': self.address, 'page': page, 'page_size': '100', 'remove_spam': 'false',
 							'exclude_amount_zero': 'false',
-						})
+						}, headers=self.headers)
 						await asyncio.sleep(1)
 					for txn in bal['data']:
 						transactions.add(txn['trans_id'])
@@ -131,9 +140,10 @@ class Request:
 		programs = set()
 		turbo_tap_id = 'turboe9kMc3mSR8BosPkVzoHUfn5RVNzZhkrT2hdGxN'
 		turbo_address = None
-		for i in range(5):
+		for i in range(10):
 			try:
-				transaction_info = await async_get(url=url, proxy=self.proxy, params={'tx':tx_id})
+				transaction_info = await async_get(url=url, proxy=self.proxy, params={'tx':tx_id}, headers=self.headers)
+				# print(transaction_info)
 				if transaction_info['success'] == True:
 					transaction_info = transaction_info['data']
 					fee = transaction_info['fee']
@@ -152,7 +162,7 @@ class Request:
 
 					return {'fee':fee, 'programs':programs, 'sol_bal_change':sol_bal_change, 'turbo_address':turbo_address}
 			except Exception as e:
-				print(e)
+				print('tx_info',e)
 				await asyncio.sleep(0.1)
 
 		print(f'error get_tx_info: {tx_id}')
@@ -160,13 +170,15 @@ class Request:
 
 	async def count_turbo_taps(self, address:str):
 		url = 'https://api.eclipsescan.xyz/v1/account/balance_change/total'
-		for i in range(5):
+		for i in range(10):
 			try:
-				count = await async_get(url=url, proxy=self.proxy, params={'address': address})
+				count = await async_get(url=url, proxy=self.proxy, params={'address': address}, headers=self.headers)
+				# print(count)
 				if count['success'] == True:
 					count = count['data']
 					return count
 			except Exception as e:
+
 				print(e)
 				await asyncio.sleep(0.1)
 		print(f'error count_turbo_taps: {self.address}')
@@ -183,6 +195,7 @@ class Request:
 			await self.tx_count()['transactions']
 		for tx in transactions:
 			info = await self.get_tx_info(tx)
+
 			fee += info['fee']
 			sol_bal_change += info['sol_bal_change']
 			programs = programs.union(info['programs'])
